@@ -1,0 +1,11 @@
+{
+  "name": "claude-pomodoro",
+  "owner": { "name": "TLausZ" },
+  "plugins": [
+    {
+      "name": "pomodoro",
+      "source": "./",
+      "description": "Pomodoro timer for the Claude Code status line: /pomodoro command, per-phase emoji, desktop notifications on phase change"
+    }
+  ]
+}

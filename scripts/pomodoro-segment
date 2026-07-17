@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Pomodoro status line segment for Claude Code.
+# Prints one ANSI-colored segment like "🔨 12:34" (work) or "🍺 52:01" (break),
+# or nothing when the timer is stopped. Call it from your own status line script.
+#
+# Cycle: work phase (magenta), then break phase (yellow), repeat.
+# Defaults below; override at runtime with `pomodoro -setup <work mm:ss> <break mm:ss>`.
+work_sec=3000   # 50 min
+break_sec=600   # 10 min
+
+STATE="$HOME/.claude/pomodoro-state"
+CONF="$HOME/.claude/pomodoro-config"
+LASTPHASE="$HOME/.claude/pomodoro-lastphase"
+
+[ -f "$STATE" ] || exit 0
+read -r mode val < "$STATE" || exit 0
+[ -f "$CONF" ] && read -r work_sec break_sec < "$CONF"
+
+cycle=$(( work_sec + break_sec ))
+
+if [ "$mode" = "running" ]; then
+  total=$(( $(date +%s) - val ))
+else
+  total=$val
+fi
+sec=$(( total % cycle ))
+clock=$(printf '%02d:%02d' $(( sec / 60 )) $(( sec % 60 )))
+
+# One random-looking emoji per phase, picked from a 64-emoji pool.
+# ponytail: deterministic hash instead of $RANDOM so the emoji stays stable
+# within a phase and only re-rolls on each work/break transition
+work_emoji=(🔨 🔧 🛠️ 🏗️ 🚧 🧰 🪛 🪚 🪓 🔩 🧱 🪜 💻 🖥️ 🖨️ 🖱️ 💾 🗄️ 📚 📝 📐 📏 🧮 🔬 🔭 🧪 🧬 🤖 🧠 🤓 🧐 😤 💪 🏋️ 🚀 🛰️ 🚜 🚛 🚂 🏭 💥 🔥 🎯 🏃 🐝 🐜 🦫 🦾 🥷 🧗 🕰️ 🗿 📈 💼 🗂️ 📌 🔍 💡 🪫 🧲 🚨 🥵 🫡 🤯)
+break_emoji=(🍺 🍻 🥂 🍷 🍸 🍹 🍾 🥃 🧉 🍵 🧋 🥤 🍕 🍔 🍟 🌮 🌭 🍿 🍩 🍪 🍰 🧁 🍦 🍫 🍭 🍉 🍓 🍒 🏖️ 🌴 🌊 🏄 🎣 🛋️ 🛌 💤 😴 🥱 🧘 🧖 🛀 🎮 🎲 🎳 🎬 🎧 🎸 🎹 🥁 🎤 🎪 🎨 🎭 🎡 🎢 🎠 🚶 😎 😌 🤤 🥳 🤪 🦥 🐢)
+idx=$(( ( (val + total / cycle) * 7919 ) % 64 ))
+
+if [ "$sec" -lt "$work_sec" ]; then
+  phase=work
+  str="${work_emoji[idx]} ${clock}"; color='\033[35m'
+else
+  phase=break
+  str="${break_emoji[idx]} ${clock}"; color='\033[38;5;220m'
+fi
+
+# Desktop notification on phase change (macOS: osascript, Linux: notify-send,
+# elsewhere: silent). Runs as a side effect of the status line refresh.
+notify() {  # $1 message, $2 macOS sound name
+  if command -v osascript >/dev/null 2>&1; then
+    osascript -e "display notification \"$1\" with title \"Pomodoro\" sound name \"$2\"" &>/dev/null &
+  elif command -v notify-send >/dev/null 2>&1; then
+    notify-send "Pomodoro" "$1" &>/dev/null &
+  fi
+}
+
+if [ "$mode" = "running" ] && [ "$phase" != "$(cat "$LASTPHASE" 2>/dev/null)" ]; then
+  echo "$phase" > "$LASTPHASE"
+  if [ "$phase" = "break" ]; then
+    notify "Coffee break! ☕" "Glass"
+  else
+    notify "Back to work." "Ping"
+  fi
+fi
+
+[ "$mode" = "paused" ] && str="${str} ⏸"
+printf "${color}%s\033[0m" "$str"

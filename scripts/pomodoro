@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Pomodoro timer control.
+# State file: "running <start-epoch>" or "paused <elapsed-sec>"; missing = stopped.
+# Config file: "work_sec break_sec"; missing = segment defaults (50/10 min).
+STATE="$HOME/.claude/pomodoro-state"
+CONF="$HOME/.claude/pomodoro-config"
+
+case "$1" in
+  -start)
+    if [ -f "$STATE" ] && read -r mode val < "$STATE" && [ "$mode" = "paused" ]; then
+      echo "running $(( $(date +%s) - val ))" > "$STATE"   # resume where we paused
+    else
+      echo "running $(date +%s)" > "$STATE"
+    fi ;;
+  -stop)  rm -f "$STATE" ;;
+  -pause)
+    if [ -f "$STATE" ] && read -r mode val < "$STATE" && [ "$mode" = "running" ]; then
+      echo "paused $(( $(date +%s) - val ))" > "$STATE"
+    fi ;;
+  -reset) echo "running $(date +%s)" > "$STATE" ;;
+  -setup)
+    if [[ "$2" =~ ^[0-9]+:[0-5][0-9]$ && "$3" =~ ^[0-9]+:[0-5][0-9]$ ]]; then
+      work=$(( 10#${2%%:*} * 60 + 10#${2##*:} ))
+      brk=$((  10#${3%%:*} * 60 + 10#${3##*:} ))
+      if [ $(( work + brk )) -eq 0 ]; then
+        echo "error: work and break cannot both be 00:00" >&2; exit 1
+      fi
+      echo "$work $brk" > "$CONF"
+      echo "work $2, break $3"
+    else
+      echo "usage: pomodoro -setup <work mm:ss> <break mm:ss>  (e.g. -setup 50:00 10:00)" >&2; exit 1
+    fi ;;
+  *) echo "usage: pomodoro -start|-stop|-pause|-reset|-setup <work mm:ss> <break mm:ss>" >&2; exit 1 ;;
+esac
