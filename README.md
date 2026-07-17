@@ -31,7 +31,19 @@ A Pomodoro timer that lives in the Claude Code status line. 50 minutes of work, 
 
 ## Install
 
-As a Claude Code plugin:
+**Let Claude install it** — paste this prompt into Claude Code:
+
+```
+Install https://github.com/TLausZ/claude-pomodoro: clone the repo, run its
+test.sh, then wire scripts/pomodoro-segment into my Claude Code status line —
+if I already have a statusLine command, append the segment to it; otherwise
+point statusLine.command in ~/.claude/settings.json at a minimal script that
+just runs pomodoro-segment. Show me your plan before changing any of my
+existing files. You are done when test.sh passes and /pomodoro start makes
+the timer appear in my status line.
+```
+
+Or as a Claude Code plugin:
 
 ```
 /plugin marketplace add TLausZ/claude-pomodoro
