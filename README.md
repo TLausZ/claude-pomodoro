@@ -23,7 +23,7 @@ A Pomodoro timer that lives in the Claude Code status line. 50 minutes of work, 
 
 ![Claude Code status line with the Pomodoro timer at the far right](screenshot.png)
 
-- `/pomodoro start|pause|reset|stop` slash command inside Claude Code
+- `/pomodoro start|pause|reset|stop|setup` slash command inside Claude Code
 - Timer segment for your status line: `🔨 12:34` during work (magenta), `🍺 52:01` during break (yellow)
 - A different emoji every phase, picked from a pool of 64 per phase
 - Desktop notification with sound on every work/break transition (macOS and Linux)
