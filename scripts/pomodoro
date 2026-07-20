@@ -30,5 +30,5 @@ case "$1" in
     else
       echo "usage: pomodoro -setup <work mm:ss> <break mm:ss>  (e.g. -setup 50:00 10:00)" >&2; exit 1
     fi ;;
-  *) echo "usage: pomodoro -start|-stop|-pause|-reset|-setup <work mm:ss> <break mm:ss>" >&2; exit 1 ;;
+  *) echo "usage: pomodoro -start|-stop|-pause|-reset|-setup <work mm:ss> <break mm:ss>" ;;
 esac
